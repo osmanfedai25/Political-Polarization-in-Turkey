@@ -1,0 +1,631 @@
+---
+title: "Shy Voters in the 2024 US presidential Elections - First Converted R Codes(1st Part until Video Assignment)"
+output: html_document
+date: "2025-03-27"
+---
+
+```{r setup, include=FALSE}
+Merged <- Merged %>%
+  mutate(
+    q2_party_REC1_label = factor(q2_party_REC1,
+                                 levels = c(1, 2, 3, 4, 5, 6, 7),
+                                 labels = c("Strong Democrat", "Weak Democrat", "Lean Democrat",
+                                            "Independent", "Lean Republican", "Weak Republican","Strong Republican")))
+# factor() command converts "q2_party_REC1" into a labeled categorical variable. The levels specify the possible values, and labels define their descriptions.
+
+q2_party_REC1 = ifelse(q2_party == 14, 7, q2_party)
+# This command "ifelse(condition, true_value, false_value)" Replaces q2_party values of 14 with 7, while leaving all other values unchanged.
+q2_party_dem = q2_party_REC1 %in% c(2, 3)
+# "%in%" command checks if q2_party_REC1 is in the set {2, 3}. "as.numeric()" function converts the logical result (TRUE/FALSE) into numeric (1/0).
+q2_party_ind = as.numeric(q2_party_REC1 == 4)
+#"q2_party_REC1 == 4" command here checks if q2_party_REC1 is equal to 4. Converts the result to numeric (1 for TRUE, 0 for FALSE).
+q2_party_rep = as.numeric(q2_party_REC1 %in% c(5, 6, 7))
+
+# q2_party_REC1 %in% c(5, 6, 7): Checks if q2_party_REC1 is in the set {5, 6, 7}. Converts the result to numeric (1 for TRUE, 0 for FALSE).
+
+data <- data %>%
+  mutate(
+    q2_party_REC3 = case_when(
+      q2_party_dem == 1 ~ 0,
+      q2_party_ind == 1 ~ 1,
+      q2_party_rep == 1 ~ 2,
+      TRUE ~ NA_real_))
+#The case_when() in this code evaluates the following conditions sequentially: q2_party_dem == 1 ~ 0:
+#Checks if q2_party_dem equals 1. If TRUE, assigns the value 0 to q2_party_REC3.
+#q2_party_ind == 1 ~ 1: This command Checks if q2_party_ind equals 1. If TRUE, assigns the value 1 to q2_party_REC3. 
+
+#q2_party_rep == 1 ~ 2: Checks if q2_party_rep equals 1. If TRUE, assigns the value 2 to q2_party_REC3. If TRUE, assigns the value 2 to q2_party_REC3.
+# TRUE ~ NA_real_: If none of the above conditions are TRUE, assigns NA_real_ (a missing value of numeric type) to q2_party_REC3.
+
+#Merged <- Merged %>%
+#mutate(q2_party_REC4 = case_when(q2_party_REC1 %in% 2:3 ~ 1,  # 2 or 3 → 
+# q2_party_REC1 == 4 ~ 2,     # 4 → 2
+# q2_party_REC1 %in% 5:6 ~ 3, # 5 or 6 → 3
+# q2_party_REC1 == 7 ~ 4,     # 7 → 4
+# TRUE ~ NA_real_))  Default: NA for unmatched cases
+
+# q2_party_REC1 %in% 2:3: Checks if q2_party_REC1 is 2 or 3 and assigns 1.
+# q2_party_REC1 == 4: Checks if q2_party_REC1 is 4 and assigns 2.
+# q2_party_REC1 %in% 5:6: Checks if q2_party_REC1 is 5 or 6 and assigns 3.
+# q2_party_REC1 == 7: Checks if q2_party_REC1 is 7 and assigns 4.
+      
+data <- data %>%
+  mutate(
+    q2_party_REC4 = factor(q2_party_REC4,
+                           levels = c(1, 2, 3, 4),
+                           labels = c("Weak/Lean Democrat", "Independent", 
+                                      "Weak/Lean Republican", "Strong Republican")))      
+#factor(): This command Converts a numeric variable into a categorical (factor) variable.
+#Levels are ordered numerically (1, 2, 3, 4).
+#Labels are descriptive strings associated with the numeric levels.
+
+Merged <- Merged %>%
+  mutate(
+    cr_party_num = case_when(
+      cr_partyid == "Independent who leans Democrat" ~ 1,
+      cr_partyid == "Independent" ~ 2,
+      cr_partyid == "Independent who leans Republican" ~ 3,
+      cr_partyid == "Republican" ~ 4,
+      cr_partyid == "Strong Republican " ~ 5,
+      TRUE ~ NA_real_))
+#case_when(): Assigns values to cr_party_num based on the string value of cr_partyid.
+#TRUE ~ NA_real_: Ensures unmatched rows are assigned NA. 
+# This is the equivalent R code for the Stata Code below:
+##  g cr_party_num=1 if cr_partyid=="Independent who leans Democrat"
+## 		replace cr_party_num=2 if cr_partyid=="Independent"
+## 		replace cr_party_num=3 if cr_partyid=="Independent who leans Republican"
+## 		replace cr_party_num=4 if cr_partyid=="Republican"
+## 		replace cr_party_num=5 if cr_partyid=="Strong Republican "
+
+data <- data %>%
+  mutate(
+    cr_party_num = factor(cr_party_num,
+                          levels = c(1, 2, 3, 4, 5),
+                          labels = c("Lean Democrat", "Independent", 
+                                     "Lean Republican", "Republican", 
+                                     "Strong Republican")))
+# factor(): Converts cr_party_num into a categorical variable with descriptive labels. This code is equivalent for the Stata code below:
+# # label define cr_party_scale 1 "Lean Democrat" 2 "Independent" 3 "Lean Republican" 4 "Replublican" 5 "Strong Republican"
+
+# Reordering Our columns:
+Merged <- Merged %>%
+  select(q2_party, q2_party_REC1, q2_party_dem, q2_party_ind, 
+         q2_party_rep, q2_party_REC3, cr_party_num, everything())
+## The Equivalent Stata Code is == order q2_party_REC1 q2_party_dem q2_party_ind q2_party_rep q2_party_REC3 cr_party_num, after(q2_party)
+
+#*Only 65% correlation (In Stata; the code is "corr q2_party_REC1 cr_party_num")
+cor(data$q2_party_REC1, as.numeric(data$cr_party_num), use = "complete.obs") 
+## [1] 0.6546782 : We get the same correlation value.
+#cor(): Calculates the correlation between two variables. use = "complete.obs": This code ensures that only rows without NA values are used in the calculation. as.numeric(): This code onverts cr_party_num (if it’s a factor) to numeric for the correlation.
+
+# FOR HET EFFECTS: Create indicator of Strong Republicans (probably least affected by treatment)
+# Stata Code: recode q2_party_REC1 (7=1) (1/6=0), g(q2_strong_rep)
+#	recode q2_party_REC1 (7=0) (1/6=1), g(q2_notstrong_rep)
+Merged <- Merged %>%
+  mutate(
+    q2_strong_rep = ifelse(q2_party_REC1 == 7, 1, 0))
+# Here, ifelse(condition, true_value, false_value) assigns 1 if q2_party_REC1 equals 7; while assigns 0 otherwise.
+Merged <- Merged %>%
+  mutate(
+    q2_notstrong_rep = ifelse(q2_party_REC1 == 7, 0, 1))
+# Here, this is the pposite logic to q2_strong_rep Assigns 0 if q2_party_REC1 equals 7; while assigning 1 otherwise.
+
+# Q3_VOTED: Stata Code was: recode q3_voted (0=0)(2=1), g(q3_voted_REC1)
+Merged <- Merged %>%
+  mutate(
+    q3_voted_REC1 = ifelse(q3_voted == 2, 1, 0))
+#Assigns 1 if q3_voted equals 2; whereas assigns 0 otherwise.
+
+#*************************************	
+#*ELIGIBLE + CONSENTED
+#*************************************
+#Equivalent Stata Codes: g elig=q2_party_REC1!=1 & q3_voted_REC1==0 & elig_age==1
+#g elig_consent=elig==1 & q5_consent==1
+Merged <- Merged %>%
+  mutate(
+    elig = q2_party_REC1 != 1 & q3_voted_REC1 == 0 & elig_age == 1)
+# q2_party_REC1 != 1: Checks if q2_party_REC1 is not 1.
+# q3_voted_REC1 == 0: Checks if q3_voted_REC1 is 0.
+#elig_age == 1: Checks if elig_age is 1.
+#The result of these conditions is combined with the logical AND (&) to create a binary column elig where: TRUE = meets all conditions; FALSE = does not meet all conditions.
+Merged <- Merged %>%
+  mutate(
+    elig_consent = elig == 1 & q5_consent == 1)
+# Here, "elig == 1: Checks if elig is TRUE (or 1). q5_consent == 1: This code checks if q5_consent equals 1. The result is stored in a new column elig_consent.
+
+### First post-screen question: Stata Codes for this. 
+  # g answered_married=q6_marital!=.
+	#tab elig_consent answered_married, miss
+Merged <- Merged %>%
+  mutate(
+    answered_married = !is.na(q6_marital))
+#is.na(): Checks if q6_marital is missing (NA in R). !: Negates the result, so: answered_married = TRUE if q6_marital is not missing. answered_married = FALSE if q6_marital is missing.
+table(Merged$elig_consent, Merged$answered_married, useNA = "ifany")
+# Here, useNA = "ifany": Includes NA values in the table, similar to the miss option in Stata.
+
+###DROP OBSERVATIONS THAT DID NOT PASS SCREENING###
+#drop if elig_consent==0.     #tab end_state
+Merged <- Merged %>%
+  filter(elig_consent == 1)
+table(Merged$end_state)
+
+###Check age -- 260 discrepancies in our actual sample
+#Stata Code : count if age_discrep == 1
+sum(Merged$age_discrep == 1, na.rm = TRUE)
+#Merged$age_discrep == 1: Checks which rows have age_discrep equal to 1.
+#sum(): Counts the number of TRUE values.
+
+###Recheck party id correlation -- 77% ###. StaCode: corr q2_party_REC1 cr_party_num
+cor(Merged$q2_party_REC1, as.numeric(Merged$cr_party_num), use = "complete.obs")
+# cor(): This calculates the correlation between two variables. 
+#as.numeric(): Converts cr_party_num to numeric if it’s stored as a factor in R. 
+#"use = complete.obs": Ensures only rows with complete data are used in the calculation.
+
+#*************************************	
+#*PRE-TREATMENT VARS
+#*************************************
+#Binary recoding for in a relationship. Stata Code: recode q6_marital (1 2 4=1) (3 5 6 7 8=0), g(q6_marital_REC2)
+Merged <- Merged %>%
+  mutate(
+    q6_marital_REC2 = case_when(
+      q6_marital %in% c(1, 2, 4) ~ 1,  # Assign 1 if q6_marital is 1, 2, or 4
+      q6_marital %in% c(3, 5, 6, 7, 8) ~ 0,  # Assign 0 otherwise
+      TRUE ~ NA_real_  # Default to NA for missing or unmatched values
+    )
+  )
+# case_when(): Used for conditional assignments. "%in%" matches values in a list (like 1 2 4 in Stata). Whereas "NA_real_" ensures the output is numeric, consistent with the 1/0 values.
+
+#####Q7 EDUC####
+# Stata Code: recode q7_educ (5/6=1)(1/4=0), g(q7_educ_REC2)
+Merged <- Merged %>%
+  mutate(
+    q7_educ_REC2 = case_when(
+      q7_educ %in% 5:6 ~ 1,  # Assign 1 if q7_educ is 5 or 6
+      q7_educ %in% 1:4 ~ 0,  # Assign 0 if q7_educ is 1 to 4
+      TRUE ~ NA_real_))
+
+# # Q8 RACE : These are Stata Codes:
+# g q8_race_REC1=.
+# foreach num of numlist 1/7 {
+# replace q8_race_REC1=`num' if q8_race_`num'==1}
+
+# label define q8_race 1 "White (non-Hispanic)" 2 "Black" 3 "Hispanic/Latina" 4 "Native American" 5 "Native Hawaiian" 6 "Asian American" 7 "Other"
+# label values q8_race_REC1 q8_race
+Merged  <- Merged %>%
+  mutate(
+    q8_race_REC1 = case_when(
+      q8_race_1 == 1 ~ 1,
+      q8_race_2 == 1 ~ 2,
+      q8_race_3 == 1 ~ 3,
+      q8_race_4 == 1 ~ 4,
+      q8_race_5 == 1 ~ 5,
+      q8_race_6 == 1 ~ 6,
+      q8_race_7 == 1 ~ 7,
+      TRUE ~ NA_real_))
+# Each if condition from the foreach loop is represented in a case_when() statement. Values are assigned to q8_race_REC1 based on which q8_race_X variable equals 1.
+Merged <- Merged %>%
+  mutate(
+    q8_race_REC1 = factor(q8_race_REC1,
+                          levels = 1:7,
+                          labels = c("White (non-Hispanic)", "Black", "Hispanic/Latina", 
+                                     "Native American", "Native Hawaiian", "Asian American", "Other")))
+
+### Binary coding for *only* white ### Stata Code: g q8_race_REC2=.
+#		replace q8_race_REC2=1 if q8_race_1==1
+#		replace q8_race_REC2=0 if q8_race_2==1 
+#		replace q8_race_REC2=0 if q8_race_3==1 
+#		replace q8_race_REC2=0 if q8_race_4==1 
+#		replace q8_race_REC2=0 if q8_race_5==1 
+#		replace q8_race_REC2=0 if q8_race_6==1 
+#		replace q8_race_REC2=0 if q8_race_7==1 
+
+Merged <- Merged %>%
+  mutate(
+    q8_race_REC2 = case_when(
+      q8_race_1 == 1 ~ 1,  # Only white
+      q8_race_2 == 1 ~ 0,
+      q8_race_3 == 1 ~ 0,
+      q8_race_4 == 1 ~ 0,
+      q8_race_5 == 1 ~ 0,
+      q8_race_6 == 1 ~ 0,
+      q8_race_7 == 1 ~ 0,
+      TRUE ~ NA_real_))
+# Here, the binary variable q8_race_REC2 equals 1 if the respondent is only white and 0 otherwise.
+###Q9_RELIGION:   ##Binary recoding for Christian
+## Stata Code: recode q9_religion (1/5=1)(6/13=0), g(q9_religion_REC2)
+# replace q9_religion_13_TEXT=trim(q9_religion_13_TEXT)
+Merged <- Merged %>%
+  mutate(
+    q9_religion_REC2 = case_when(
+      q9_religion %in% 1:5 ~ 1,  # Christian
+      q9_religion %in% 6:13 ~ 0, # Non-Christian
+      TRUE ~ NA_real_))
+
+Merged <- Merged %>%
+  mutate(
+  q9_religion_13_TEXT = str_trim(q9_religion_13_TEXT))  # Trim leading and trailing whitespace)
+#str_trim(): A function from the stringr package. This command removes leading and trailing whitespace (spaces, tabs, etc.) from strings.
+ 
+####Binary recoding for Christian ####
+Merged <- Merged %>%
+  # Step 1st: Copy q9_religion_REC2 to religion_christian
+  mutate(religion_christian = q9_religion_REC2) %>%
+  # Step 2: Update religion_christian to 1 if q9_religion_13_TEXT matches any of the specified values
+  mutate(religion_christian = case_when(
+    q9_religion_13_TEXT %in% c(
+      "Christen", "Pentecostal", "Catholic", "Nostic", "Christian", "Baptist",
+      "Non denominational Christian", 
+      "I am a Christian  but only ho to church on social media  Cornerstone  Church.",
+      "Christian-pentacostal", "Christ", "basic Christian", 
+      "I'm a member of the Church of Jesus Christ of Latter Day Saints", 
+      "Baptists christen", "Born again Christian", "Lutheran", "Presbyterian", 
+      "Christianity", "Christrian Baptist", 
+      "I know God is real, I very much believe the Bible. Jesus died for my sins and I love him with my whole heart! I am saved but I do not attend church. So I'm not sure how y'all want to label that.",
+      "Christian Methodist", "Babtist", "A Christian.", "Church of Christ",
+      "Saved FOLLOWER OF CHRIST", "Jehovah's Witness", 
+      "I pray for us all. Our heavenly Father, Jesus, and the Holy Spirit.",
+      "God fearing Christian", "Southern Baptist", "Christian Pentecostal", 
+      "None denomination Christian", "Bapstis", "Christian non-denominational",
+      "Born again believer", "Jehovah's Witnesses", "Non denomination christian",
+      "Christian only", "babpist", "Non denominal Christian", "christian", 
+      "christen", "christan", "Luthern", "Methodist"
+    ) ~ 1,
+    TRUE ~ religion_christian)) %>% # Retain the original value otherwise
+  
+# Final Step: Update q9_religion_REC2 to 1 if religion_christian is 1
+mutate(q9_religion_REC2 = ifelse(religion_christian == 1, 1, q9_religion_REC2))
+
+# case_when(): Checks if q9_religion_13_TEXT matches any of the specified values in the list (using %in% for matching multiple values). If a match is found, it sets religion_christian to 1. If no match is found (TRUE case), keeps the original value of religion_christian.
+# ifelse(): This updates q9_religion_REC2 to 1 if religion_christian equals 1. Otherwise, retains the original value of q9_religion_REC2.
+
+# **********************************	
+# Q10 STATE -- REGION V1
+# **********************************
+# Step 1: Decode `q10_state` to create `state` variable
+Merged <- Merged %>%
+  mutate(state = q10_state)
+# Step 2: Create regional dummies based on divisions: g region_div_neweng = 0 if state!=""
+#	foreach item in Connecticut Maine Massachusetts Vermont {
+#		replace region_div_neweng=1 if state=="`item'"}
+
+# STATA CODES: 
+#g region_div_midatl=0 if state!=""	
+#replace region_div_midatl = 1 if state=="New York" | state=="New Jersey" | state=="Pennsylvania"
+
+# New England
+Merged <- Merged %>%
+  mutate(region_div_neweng = ifelse(state %in% c("Connecticut", "Maine", "Massachusetts", "Vermont", 
+                                                 "New Hampshire", "Rhode Island"), 1, 0))
+# Mid-Atlantic
+Merged <- Merged %>%
+  mutate(region_div_midatl = ifelse(state %in% c("New York", "New Jersey", "Pennsylvania"), 1, 0))
+# Midwest (East)
+Merged <- Merged %>%
+  mutate(region_div_midwest_east = ifelse(state %in% c("Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin"), 1, 0))
+# Midwest (West)
+Merged <- Merged %>%
+  mutate(region_div_midwest_west = ifelse(state %in% c("Iowa", "Kansas", "Minnesota", "Missouri", 
+                                                       "Nebraska", "North Dakota", "South Dakota"), 1, 0))
+
+# South Atlantic
+Merged <- Merged %>%
+  mutate(region_div_southatl = ifelse(state %in% c("Delaware", "Florida", "Georgia", "Maryland", "Virginia", "North Carolina", "South Carolina", "West Virginia", "District of Columbia", "Puerto Rico"), 1, 0))
+# Southeast
+Merged <- Merged %>%
+  mutate(region_div_southeast = ifelse(state %in% c("Alabama", "Kentucky", "Mississippi", "Tennessee"), 1, 0))
+# South Central
+Merged <- Merged %>%
+  mutate(region_div_southcent = ifelse(state %in% c("Arkansas", "Louisiana", "Oklahoma", "Texas"), 1, 0))
+
+# Mountain
+Merged <- Merged %>%
+  mutate(region_div_mountain = ifelse(state %in% c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", 
+                                                   "Utah", "Wyoming", "New Mexico"), 1, 0))
+# Pacific
+Merged <- Merged %>%
+  mutate(region_div_pacific = ifelse(state %in% c("Alaska", "California", "Hawaii", "Oregon", "Washington"), 1, 0))
+
+# Step 3: Assign `region_div` based on regional dummies
+Merged <- Merged %>%
+  mutate(region_div = case_when(
+    region_div_neweng == 1 ~ "NEWENG",
+    region_div_midatl == 1 ~ "MIDATLANTIC",
+    region_div_midwest_east == 1 ~ "MIDWEST_EAST",
+    region_div_midwest_west == 1 ~ "MIDWEST_WEST",
+    region_div_southatl == 1 ~ "SOUTHATL",
+    region_div_southeast == 1 ~ "SOUTHEAST",
+    region_div_southcent == 1 ~ "SOUTHCENT",
+    region_div_mountain == 1 ~ "MOUNTAIN",
+    region_div_pacific == 1 ~ "PACIFIC",
+    TRUE ~ NA_character_ # Default for unmatched cases
+  ))
+
+# Step 4: Now, we create numeric codes for `region_div`variable: replace region_div_num=1 if region_div_neweng==1 / replace region_div_num=2 if region_div_midatl==1 in Stata.
+Merged <- Merged %>%
+  mutate(region_div_num = case_when(
+    region_div_neweng == 1 ~ 1,
+    region_div_midatl == 1 ~ 2,
+    region_div_midwest_east == 1 ~ 3,
+    region_div_midwest_west == 1 ~ 4,
+    region_div_southatl == 1 ~ 5,
+    region_div_southeast == 1 ~ 6,
+    region_div_southcent == 1 ~ 7,
+    region_div_mountain == 1 ~ 8,
+    region_div_pacific == 1 ~ 9,
+    TRUE ~ NA_real_ # Default for unmatched cases
+  ))
+# Step 5: Create dummy variables for `region_div_num. 
+Merged <- Merged %>%
+  mutate(across(region_div_num, ~ as.factor(.), .names = "region_div_dum_{.col}"))
+## A new numeric column region_div_num is created with codes 1–9 for the respective regions using case_when().
+
+## Step 6: Ordering the Column: This is represented in Stata as: "order state region_div_*, after(q10_state)" select() functions rearrange the column.
+Merged <- Merged %>%
+  select(q10_state, state, starts_with("region_div_"), everything())
+
+######REGION BROAD ########## The below is the corresponding Stata code:
+##	g region_broad=""
+##		replace region_broad="NORTHEAST" if region_div_neweng==1 | region_div_midatl==1
+##		replace region_broad="MIDWEST" if region_div_midwest_east==1 | region_div_midwest_west==1
+##		replace region_broad="SOUTH" if region_div_southatl==1 | region_div_southcent==1 | region_div_southeast==1
+##		replace region_broad="WEST" if region_div_mountain==1 | region_div_pacific==1
+
+# Step 1: We create the `region_broad` variable based on broad region groups
+Merged <-Merged %>%
+  mutate(region_broad = case_when(
+    region_div_neweng == 1 | region_div_midatl == 1 ~ "NORTHEAST",
+    region_div_midwest_east == 1 | region_div_midwest_west == 1 ~ "MIDWEST",
+    region_div_southatl == 1 | region_div_southcent == 1 | region_div_southeast == 1 ~ "SOUTH",
+    region_div_mountain == 1 | region_div_pacific == 1 ~ "WEST",
+    TRUE ~ NA_character_ # Default for unmatched cases
+  ))
+
+# Step 2: Then we also create the `region_broad_num` variable based on numeric codes for regions
+Merged <- Merged %>%
+  mutate(region_broad_num = case_when(
+    region_div_neweng == 1 | region_div_midatl == 1 ~ 1,
+    region_div_midwest_east == 1 | region_div_midwest_west == 1 ~ 2,
+    region_div_southatl == 1 | region_div_southcent == 1 | region_div_southeast == 1 ~ 3,
+    region_div_mountain == 1 | region_div_pacific == 1 ~ 4,
+    TRUE ~ NA_real_ # Default for unmatched cases
+  ))
+
+# Step 3: We create dummy variables for `region_broad_num`
+Merged <- Merged %>%
+  mutate(across(region_broad_num, ~ as.factor(.), .names = "region_broad_dum_{.col}"))
+# This command converts region_broad_num into dummy variables (factors).
+# Each unique value in region_broad_num becomes a dummy column prefixed with region_broad_dum_.
+
+# Step 4: Order columns to place `region_broad*` after `q10_state`
+Merged <- Merged %>%
+  select(q10_state, starts_with("region_broad"), everything())
+# This command rearranges the columns so that region_broad and related variables appear immediately after q10_state.
+############.     #############.       ##########.       ########### 
+
+# Step 1: Create `region_political` based on political regions
+Merged <- Merged %>%
+  mutate(region_political = case_when(
+    region_div == "NEWENG" | state %in% c("New York", "New Jersey", "Delaware", "Maryland", "District of Columbia") ~ "NORTHEAST/MIDATL",
+    state %in% c("Ohio", "Indiana", "Illinois", "Michigan", "Wisconsin", "Pennsylvania") ~ "RUST BELT",
+    region_div == "MIDWEST_WEST" ~ "MIDWEST (NON RUST BELT)",
+    region_div == "SOUTHEAST" | state %in% c("Louisiana", "Georgia", "South Carolina", "West Virginia", "Virginia", "Arkansas") ~ "SOUTH",
+    state %in% c("Texas", "Arizona", "Nevada", "New Mexico", "Florida", "North Carolina", "Oklahoma") ~ "SUN BELT (NON SOUTH)",
+    state %in% c("Montana", "Idaho", "Wyoming", "Utah", "Colorado") ~ "MOUNTAIN",
+    state %in% c("Washington", "Oregon", "California") ~ "PACIFIC",
+    state %in% c("Hawaii", "Alaska", "Puerto Rico") ~ "NONCONTIG",
+    TRUE ~ NA_character_)) # Default for unmatched cases
+
+#If region_div is "NEWENG" or state is "New York", "New Jersey", "Delaware", "Maryland", or "District of Columbia", assign "NORTHEAST/MIDATL".
+#If state is "Ohio", "Indiana", etc., assign "RUST BELT". Defaults to NA_character_ if no conditions are matched.
+
+# Step 2: We create `region_political_num` numeric codes
+Merged <- Merged %>%
+  mutate(region_political_num = case_when(
+    region_political == "NORTHEAST/MIDATL" ~ 1,
+    region_political == "RUST BELT" ~ 2,
+    region_political == "MIDWEST (NON RUST BELT)" ~ 3,
+    region_political == "SOUTH" ~ 4,
+    region_political == "SUN BELT (NON SOUTH)" ~ 5,
+    region_political == "MOUNTAIN" ~ 6,
+    region_political == "PACIFIC" ~ 7,
+    region_political == "NONCONTIG" ~ 8,
+    TRUE ~ NA_real_ # Default for unmatched cases
+  ))
+# Step 3: Create dummy variables for `region_political_num`
+Merged <- Merged %>%
+  mutate(across(region_political_num, ~ as.factor(.), .names = "region_political_dum_{.col}"))
+# This command converts region_political_num into dummy variables.
+# Each unique numeric value (1–8) becomes a new column prefixed with region_political_dum_.
+
+# Step 4: Order columns to place `region_political*` after `q10_state`
+Merged <- Merged %>%
+  select(q10_state, starts_with("region_political"), everything())
+```
+
+
+```{r setup, include=FALSE}
+#**********************************	Stata Codes
+#Q12 EMP	tab q12_emp
+#Binary for employed at least part time
+#recode q12_emp (1 2 3=1) (4/10=0), g(q12_emp_REC2)
+# Recode q12_emp into q12_emp_REC2 (1 if 1, 2, or 3; 0 otherwise)
+Merged <- Merged %>%
+  mutate(q12_emp_REC2 = case_when(
+    q12_emp %in% c(1, 2, 3) ~ 1,
+    q12_emp >= 4 & q12_emp <= 10 ~ 0,
+    TRUE ~ NA_real_ # Default for unmatched cases
+  ))
+```
+
+
+```{r setup, include=FALSE}
+#Q13 INC: Stata Codes
+#Somehow we have 21 missing observations == recode to median
+#sum q13_inc, detail
+#recode q13_inc (.=17), g(q13_inc_REC1)
+#xtile q13_inc_REC3 = q13_inc_REC1, nq(5)
+
+#Q14 Issues	
+#FOR HET EFFECTS: Create a binary indicator if reproductive rights in top 3 issues
+#g q14_issues_reprights_REC2 = q14_issues_0_GROUP_5==1
+#Q15 Likely vote
+#	recode q15_likely_vote (1=5) (2=4) (3=3) (4=2) (5=1), g(q15_likely_vote_REC1b)
+#	recode q15_likely_vote_REC1b(4/5=1)(3=0)(1/2=-1), g(q15_likely_vote_REC3b)
+
+###### Here are the R Codes for the Stata Codes above: #####
+# Calculate median for q13_inc excluding NA
+q13_inc_median <- median(Merged$q13_inc, na.rm = TRUE)
+
+# Replace missing values (NA) in q13_inc with the median (17 in this case)
+Merged <- Merged %>%
+  mutate(q13_inc_REC1 = ifelse(is.na(q13_inc), q13_inc_median, q13_inc))
+# Create quintiles for q13_inc_REC1
+Merged <- Merged %>%
+  mutate(q13_inc_REC3 = ntile(q13_inc_REC1, 5))
+# Create binary indicator for reproductive rights in top 3 issues
+Merged <- Merged %>%
+  mutate(q14_issues_reprights_REC2 = ifelse(q14_issues_0_GROUP_5 == 1, 1, 0))
+
+# Reverse the scale for q15_likely_vote; we recode it. 
+Merged <- Merged %>%
+  mutate(q15_likely_vote_REC1b = case_when(
+    q15_likely_vote == 1 ~ 5,
+    q15_likely_vote == 2 ~ 4,
+    q15_likely_vote == 3 ~ 3,
+    q15_likely_vote == 4 ~ 2,
+    q15_likely_vote == 5 ~ 1
+  ))
+
+# In Stata, this code is used: recode q15_likely_vote_REC1b(4/5=1)(3=0)(1/2=-1), g(q15_likely_vote_REC3b).   We recode to a new scale (-1, 0, 1)
+Merged <- Merged %>%
+  mutate(q15_likely_vote_REC3b = case_when(
+    q15_likely_vote_REC1b %in% c(4, 5) ~ 1,
+    q15_likely_vote_REC1b == 3 ~ 0,
+    q15_likely_vote_REC1b %in% c(1, 2) ~ -1))
+```
+
+
+```{r setup, include=FALSE}
+#Q16 Undecided in Stata: #Version with flipped scale (certain coded high)
+#recode q16_certain_vote (1=4)(2=3)(3=2)(4=1), g(q16_certain_vote_REC1b)
+
+#Q17 Likely Trump	
+# recode q17_likely_trump (1=5) (2=4)(3=3)(4=2)(5=1), g(q17_likely_trump_REC1b)
+# FOR HET EFFECTS: q17_trump_undecided
+# recode q17_likely_trump (2/4=1) (1 5=0), g(q17_trump_undecided)
+
+# Reverse the scale for q16_certain_vote, namely for Undecided:
+Merged <- Merged %>%
+  mutate(q16_certain_vote_REC1b = case_when(
+    q16_certain_vote == 1 ~ 4,
+    q16_certain_vote == 2 ~ 3,
+    q16_certain_vote == 3 ~ 2,
+    q16_certain_vote == 4 ~ 1
+  ))
+
+# Reverse the scale for q17_likely_trump
+Merged <- Merged %>%
+  mutate(q17_likely_trump_REC1b = case_when(
+    q17_likely_trump == 1 ~ 5,
+    q17_likely_trump == 2 ~ 4,
+    q17_likely_trump == 3 ~ 3,
+    q17_likely_trump == 4 ~ 2,
+    q17_likely_trump == 5 ~ 1))
+```
+
+
+```{r setup, include=FALSE}
+# In Stata: *Q17 Donated: Create variables for donated to Trump, Harris, never donated	
+# g q17a_donated=.
+# foreach num of numlist 1/6 {
+# replace q17a_donated=`num' if q17a_donated_`num'==1}
+
+# In R, we create a variable for donated status
+Merged <- Merged %>%
+  mutate(q17a_donated = NA_real_) %>%
+  mutate(q17a_donated = case_when(
+    q17a_donated_1 == 1 ~ 1,
+    q17a_donated_2 == 1 ~ 2,
+    q17a_donated_3 == 1 ~ 3,
+    q17a_donated_4 == 1 ~ 4,
+    q17a_donated_5 == 1 ~ 5,
+    q17a_donated_6 == 1 ~ 6))
+```
+
+
+```{r setup, include=FALSE}
+#Q18 Network votes	 #FOR HET EFFECTS: Network voting for Trump
+#recode q18_netw_vote (1=1)(2/6=0), g(q18_netw_trump)
+# recode q18_netw_trump (1=0)(0=1), g(q18_netw_notrump)
+# Recode q18_netw_vote to q18_netw_trump (1 if 1, 0 otherwise)
+Merged <- Merged %>%
+  mutate(q18_netw_trump = case_when(
+    q18_netw_vote == 1 ~ 1,
+    q18_netw_vote >= 2 & q18_netw_vote <= 6 ~ 0,
+    TRUE ~ NA_real_)) # Default for unmatched cases
+
+# Reverse q18_netw_trump to create q18_netw_notrump (0 becomes 1, 1 becomes 0)
+Merged <- Merged %>%
+  mutate(q18_netw_notrump = ifelse(q18_netw_trump == 1, 0, ifelse(q18_netw_trump == 0, 1, NA_real_)))
+```
+
+
+```{r setup, include=FALSE}
+# # Q19 Partner votes	
+# # FOR HET EFFECTS: Partner voting for Trump
+#	g q19_sig_vote_trump = q19_sig_vote==1	
+# recode q19_sig_vote_trump (1=0)(0=1), g(q19_sig_vote_notrump)
+# Create q19_sig_vote_trump (1 if q19_sig_vote == 1, 0 otherwise)
+Merged <- Merged %>%
+  mutate(q19_sig_vote_trump = ifelse(q19_sig_vote == 1, 1, 0))
+
+# Reverse q19_sig_vote_trump to create q19_sig_vote_notrump (0 becomes 1, 1 becomes 0)
+Merged <- Merged %>%
+  mutate(q19_sig_vote_notrump = ifelse(q19_sig_vote_trump == 1, 0, ifelse(q19_sig_vote_trump == 0, 1, NA_real_)))
+```
+
+
+```{r setup, include=FALSE}
+# # Q20 (comfortable = high)
+#	recode q20_sanction (1=4)(2=3)(3=2)(4=1),g(q20_sanction_REC1b)
+# recode q20_sanction (3/4=1)(1/2=0), g(q20_fear_sanction_REC2)
+
+# Reverse the scale for q20_sanction
+Merged <- Merged %>%
+  mutate(q20_sanction_REC1b = case_when(
+    q20_sanction == 1 ~ 4,
+    q20_sanction == 2 ~ 3,
+    q20_sanction == 3 ~ 2,
+    q20_sanction == 4 ~ 1,
+    TRUE ~ NA_real_))
+
+# Recode q20_sanction_REC1b to q20_fear_sanction_REC2 (1 if 3 or 4, 0 if 1 or 2)
+Merged <- Merged %>%
+  mutate(q20_fear_sanction_REC2 = case_when(
+    q20_sanction_REC1b %in% c(3, 4) ~ 1,
+    q20_sanction_REC1b %in% c(1, 2) ~ 0,
+    TRUE ~ NA_real_))
+```
+
+```{r}
+#*************************************	
+#*VIDEO TREATMENT ASSIGNED HERE
+#*************************************	
+#*drop if end_state=="4_attnfail"	
+#*Check balance
+#*tab TREAT	
+#*tab TREAT ENUM
+#*tab ENUM_ALL
+
+# Drop rows where `end_state` equals "4_attnfail"
+FINAL_PRETREAT <- FINAL_PRETREAT %>%
+  filter(end_state != "4_attnfail")
+```
+
+
+```{r}
+```
+
+
+
+
